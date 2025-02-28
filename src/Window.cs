@@ -47,6 +47,13 @@ sealed partial class Window : System.Windows.Window
         int pvAttribute = 1;
         DwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref pvAttribute, sizeof(int));
 
-        ContentRendered += async (_, _) => { if (InternetGetConnectedState(out _, default)) ((Content)Content).IsEnabled = await (await Catalog.GetAsync()).CompatibleAsync(); };
+        ContentRendered += async (_, _) =>
+        {
+            if (InternetGetConnectedState(out _, default) && Minecraft.Installed)
+            {
+                Minecraft.Debug = true;
+                ((Content)Content).IsEnabled = await (await Catalog.GetAsync()).CompatibleAsync();
+            }
+        };
     }
 }
