@@ -1,5 +1,9 @@
+using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
@@ -52,6 +56,11 @@ sealed partial class Window : System.Windows.Window
             if (InternetGetConnectedState(out _, default) && Minecraft.Installed)
             {
                 Minecraft.Debug = true;
+                if (File.Exists("Flarial.Loader.json"))
+                {
+                    using FileStream stream = new("Flarial.Loader.json", FileMode.Open, FileAccess.Read, default, default, true);
+                    ((Content)Content).Value = await JsonSerializer.DeserializeAsync<bool>(stream);
+                }
                 ((Content)Content).IsEnabled = await (await Catalog.GetAsync()).CompatibleAsync();
             }
         };

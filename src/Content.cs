@@ -1,10 +1,22 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Windows;
 using System.Windows.Controls;
 using Flarial.Launcher.SDK;
 
 sealed class Content : Grid
 {
+    readonly CheckBox CheckBox = new()
+    {
+        VerticalAlignment = VerticalAlignment.Bottom,
+        HorizontalAlignment = HorizontalAlignment.Center,
+    };
+
+    internal bool Value { set { CheckBox.IsChecked = value; } }
+
     internal Content(Window @this)
     {
         RowDefinitions.Add(new());
@@ -26,17 +38,11 @@ sealed class Content : Grid
             VerticalAlignment = VerticalAlignment.Bottom
         };
 
-        CheckBox checkBox = new()
-        {
-            VerticalAlignment = VerticalAlignment.Bottom,
-            HorizontalAlignment = HorizontalAlignment.Center
-        };
-
         SetRow(button, default); SetColumn(button, default);
         Children.Add(button);
 
-        SetRow(checkBox, 0); SetColumn(checkBox, default);
-        Children.Add(checkBox);
+        SetRow(CheckBox, 0); SetColumn(CheckBox, default);
+        Children.Add(CheckBox);
 
         SetRow(progressBar, default); SetColumn(progressBar, default);
         Children.Add(progressBar);
@@ -44,10 +50,10 @@ sealed class Content : Grid
         button.Click += async (_, _) =>
         {
             button.IsEnabled = false;
-            checkBox.Visibility = Visibility.Hidden;
+            CheckBox.Visibility = Visibility.Hidden;
             progressBar.Visibility = Visibility.Visible;
 
-            await Client.DownloadAsync((bool)checkBox.IsChecked, (_) => Dispatcher.Invoke(() =>
+            await Client.DownloadAsync((bool)CheckBox.IsChecked, (_) => Dispatcher.Invoke(() =>
             {
                 if (progressBar.Value != _)
                 {
@@ -59,15 +65,15 @@ sealed class Content : Grid
             progressBar.Value = default;
             progressBar.IsIndeterminate = true;
 
-            bool _ = true;
-            try { await Client.LaunchAsync((bool)checkBox.IsChecked); }
-            catch (OperationCanceledException) { _ = false; }
+            bool value = await Client.LaunchAsync((bool)CheckBox.IsChecked);
 
             progressBar.Visibility = Visibility.Hidden;
-            checkBox.Visibility = Visibility.Visible;
+            CheckBox.Visibility = Visibility.Visible;
             button.IsEnabled = true;
 
-            if (_) @this.Close();
+            if (value) @this.Close();
         };
+
+        Application.Current.Exit += (_, _) => File.WriteAllText("Flarial.Loader.json", JsonSerializer.Serialize((bool)CheckBox.IsChecked));
     }
 }
